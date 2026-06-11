@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Utilização de Limite · TC MLB · Últimos 12 meses</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e0e0e0}
+header{background:#1a1d27;padding:18px 36px;border-bottom:2px solid #2563eb;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+header h1{font-size:19px;font-weight:700;color:#fff}
+header p{font-size:12px;color:#9ca3af;margin-top:3px}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.seg-toggle{display:flex;gap:6px}
+.seg-btn{padding:6px 16px;border-radius:20px;border:1.5px solid #374151;background:transparent;color:#9ca3af;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.seg-btn.act-all{border-color:#6366f1;background:#1e1b4b;color:#a5b4fc}
+.seg-btn.act-micro{border-color:#ef4444;background:#450a0a;color:#fca5a5}
+.seg-btn.act-full{border-color:#3b82f6;background:#0c1a3a;color:#93c5fd}
+.warning{background:#1c1500;border-left:4px solid #f59e0b;margin:14px 36px 0;padding:9px 14px;border-radius:4px;font-size:12px;color:#fcd34d}
+.sec{padding:18px 36px 0}
+.sec-title{font-size:13px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec-title span{width:3px;height:14px;border-radius:2px;display:inline-block}
+.s-blue{background:#3b82f6}.s-purple{background:#8b5cf6}.s-teal{background:#14b8a6}.s-orange{background:#f97316}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:#1a1d27;border-radius:10px;padding:16px;border:1px solid #23263a}
+.card h2{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:10px}
+.kpi{font-size:28px;font-weight:700;line-height:1}
+.kpi-sub{font-size:11px;color:#6b7280;margin-top:4px}
+.red{color:#ef4444}.orange{color:#f97316}.blue{color:#3b82f6}.teal{color:#14b8a6}.purple{color:#a78bfa}
+canvas{max-height:260px}
+.insight{background:#111827;border:1px solid #1f2937;border-left:3px solid #3b82f6;border-radius:6px;padding:10px 14px;font-size:12px;line-height:1.7;color:#9ca3af;margin-top:10px}
+.insight strong{color:#60a5fa}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+th{text-align:left;color:#6b7280;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid #23263a;cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+th:hover{color:#e0e0e0;background:#1f2235}
+th.sorted{color:#3b82f6;background:#0c1a3a}
+td{padding:7px 10px;border-bottom:1px solid #1a1d27;vertical-align:middle;white-space:nowrap}
+tr:hover td{background:#1f2235}
+.mini-bar{width:80px;height:5px;background:#23263a;border-radius:3px;display:inline-block;vertical-align:middle;margin-left:4px}
+.mini-fill{height:5px;border-radius:3px}
+.pill{display:inline-block;padding:1px 7px;border-radius:20px;font-size:11px;font-weight:700}
+.p-hi{background:#450a0a;color:#f87171}
+.p-md{background:#431407;color:#fb923c}
+.p-lo{background:#052e16;color:#4ade80}
+.p-nm{background:#1e1b4b;color:#a5b4fc}
+.tab-nav{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tab-btn{padding:5px 14px;border-radius:6px;border:1px solid #23263a;background:transparent;color:#6b7280;cursor:pointer;font-size:12px;transition:all .15s}
+.tab-btn.active{background:#1e2235;color:#e0e0e0;border-color:#374151}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.curve-select{background:#1a1d27;border:1px solid #374151;color:#e0e0e0;padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;max-width:340px}
+.curve-select option{background:#1a1d27}
+.grad-note{font-size:11px;color:#6b7280;text-align:center;padding:6px 0 2px;letter-spacing:.03em}
+footer{padding:24px 36px 14px;font-size:11px;color:#374151;text-align:center}
+/* ── drill-down modal ── */
+.pol-link{color:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;text-decoration-color:#374151;transition:color .15s}
+.pol-link:hover{color:#60a5fa;text-decoration-color:#3b82f6}
+#drillModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:999;overflow-y:auto;padding:28px 16px}
+.dm-box{background:#1a1d27;border-radius:12px;margin:0 auto;max-width:920px;border:1px solid #374151;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.dm-header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid #23263a;gap:12px}
+.dm-header h3{font-size:14px;font-weight:700;color:#fff;margin-bottom:3px}
+.dm-header p{font-size:11px;color:#6b7280}
+.dm-close{background:transparent;border:1px solid #374151;color:#9ca3af;width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0;transition:all .15s}
+.dm-close:hover{background:#374151;color:#fff}
+.dm-safra-sel{background:#111827;border:1px solid #374151;color:#e0e0e0;padding:4px 9px;border-radius:6px;font-size:12px;cursor:pointer}
+.dm-tabs{display:flex;gap:4px;padding:12px 22px 0;flex-wrap:wrap}
+.dm-tab{padding:5px 13px;border-radius:6px 6px 0 0;border:1px solid transparent;background:transparent;color:#6b7280;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.04em;transition:all .15s;border-bottom:none}
+.dm-tab:hover{color:#e0e0e0;background:#1f2235}
+.dm-tab.active{background:#111827;color:#e0e0e0;border-color:#374151;border-bottom:1px solid #111827}
+.dm-body{background:#111827;border-radius:0 0 10px 10px;padding:20px 22px;margin:0 0 0;border-top:1px solid #374151}
+.dm-chart-wrap{position:relative;height:240px;margin-bottom:14px}
+.dm-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}
+.dm-tbl th{color:#6b7280;font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid #23263a;text-align:left;white-space:nowrap}
+.dm-tbl td{padding:5px 8px;border-bottom:1px solid #1a1d27;white-space:nowrap;vertical-align:middle}
+.dm-tbl tr:hover td{background:#1f2235}
+.dm-nodata{text-align:center;padding:32px 20px;color:#6b7280}
+.dm-nodata strong{color:#9ca3af;display:block;margin-bottom:8px;font-size:13px}
+.dm-query{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:12px 14px;font-family:'Consolas','Courier New',monospace;font-size:11px;color:#8b949e;text-align:left;white-space:pre;overflow-x:auto;margin-top:12px;position:relative}
+.dm-copy{position:absolute;top:6px;right:8px;background:#21262d;border:1px solid #30363d;color:#8b949e;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer}
+.dm-copy:hover{background:#30363d;color:#e0e0e0}
+/* ── perfis de risco ── */
+.perf-sel{background:#1a1d27;border:1px solid #374151;color:#e0e0e0;padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+.perf-sel option{background:#1a1d27}
+.perf-card{background:#111827;border-radius:8px;padding:14px 16px;border:1px solid #1f2937;cursor:pointer;transition:border-color .15s}
+.perf-card:hover{border-color:#374151}
+.perf-card-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px}
+.perf-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.badge-q1{background:#052e16;color:#4ade80}
+.badge-q2{background:#0c1a3a;color:#93c5fd}
+.badge-q3{background:#431407;color:#fb923c}
+.badge-q4{background:#450a0a;color:#f87171}
+.badge-qn{background:#1f2937;color:#6b7280}
+.perf-metric-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #1f2937}
+.perf-metric-row:last-child{border-bottom:none}
+.perf-neighbor{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1a1d27;font-size:11px}
+.perf-neighbor:last-child{border-bottom:none}
+.perf-nodata{text-align:center;padding:40px 20px;color:#4b5563;font-size:12px}
+.perf-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Utilização de Limite · Acompanhamento por Safra de Conversão · TC MLB</h1>
+    <p>Últimos 12 meses · Abr/2025–Abr/2026 · Sem label de fraude — comportamento de uso puro · Over30@MOB3 disponível até Dez/2025</p>
+  </div>
+  <div class="controls">
+    <div class="seg-toggle">
+      <button class="seg-btn act-all"   onclick="setSeg('all',this)">Todos</button>
+      <button class="seg-btn"           onclick="setSeg('micro_tc',this)">micro_tc</button>
+      <button class="seg-btn"           onclick="setSeg('tc_full',this)">tc_full</button>
+    </div>
+  </div>
+</header>
+
+<div class="warning">⚠️ Abril/2026 incompleto (~14 dias). Janelas D14 e D30 não fechadas — métricas subavaliadas para essa safra. Over30@MOB3 disponível para safras até Dez/2025; Jan–Abr/2026 a maturar.</div>
+
+<div class="sec" style="margin-top:14px">
+  <div class="sec-title"><span class="s-blue"></span>Visão Geral — Últimos 12 meses completos (Abr/2025–Mar/2026)</div>
+  <div class="grid g4">
+    <div class="card"><h2>Clientes convertidos</h2><div class="kpi blue" id="kpi-cl">—</div><div class="kpi-sub" id="kpi-cl-sub">micro + full</div></div>
+    <div class="card"><h2>% médio limite usado D0</h2><div class="kpi orange" id="kpi-d0">—</div><div class="kpi-sub">uso no dia do primeiro uso</div></div>
+    <div class="card"><h2>% usuários ≥80% limite D0</h2><div class="kpi red" id="kpi-u80">—</div><div class="kpi-sub">alto uso imediato</div></div>
+    <div class="card"><h2>Over30@MOB3 médio</h2><div class="kpi purple" id="kpi-over30">—</div><div class="kpi-sub" id="kpi-over30-sub">Abr–Dez/2025 · MOB3 disponível</div></div>
+  </div>
+</div>
+
+<div class="sec" style="margin-top:18px">
+  <div class="sec-title"><span class="s-purple"></span>Curvas de Utilização — Evolução D0→D30 por Safra (gradiente: antigo → recente)</div>
+  <div class="grid g2">
+    <div class="card">
+      <h2>% médio do limite consumido (curva acumulada D0→D30)</h2>
+      <canvas id="chartCurvaMedia"></canvas>
+      <div class="grad-note" id="gradNoteCM"></div>
+    </div>
+    <div class="card">
+      <h2>% usuários que atingiram ≥80% do limite</h2>
+      <canvas id="chartCurvaUsuarios"></canvas>
+      <div class="grad-note" id="gradNoteCU"></div>
+    </div>
+  </div>
+  <div class="insight">
+    <strong>Leitura do gradiente:</strong> linhas mais claras = safras mais antigas (Abr/2025); linhas mais escuras/saturadas = safras recentes (Mar/2026); linha tracejada âmbar = Abr/2026 (parcial).
+    micro_tc em vermelho · tc_full em azul.
+    <strong>Over30@MOB3</strong> disponível para Abr–Dez/2025 — média ~3% micro_tc, ~3.5% tc_full.
+  </div>
+</div>
+
+<div class="sec" style="margin-top:18px;padding-bottom:30px">
+  <div class="sec-title"><span class="s-teal"></span>Acompanhamento por Política / Cluster</div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('politica',this)">Por Política</button>
+    <button class="tab-btn" onclick="showTab('curva-pol',this)">Curvas por Política</button>
+    <button class="tab-btn" onclick="showTab('safra-comp',this)">Comparativo de Safras</button>
+    <button class="tab-btn" onclick="showTab('canal',this)">Por Canal de Aquisição</button>
+  </div>
+
+  <div id="tab-politica" class="tab-pane active">
+    <div class="card">
+      <h2>Tabela de acompanhamento · Over30@MOB3 real onde disponível</h2>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+        <input id="searchPol" type="text" placeholder="Filtrar política..." style="background:#111827;border:1px solid #374151;color:#e0e0e0;padding:5px 10px;border-radius:6px;font-size:12px;width:240px">
+        <select id="safraFilter" onchange="renderTabela()" style="background:#1a1d27;border:1px solid #374151;color:#e0e0e0;padding:5px 10px;border-radius:6px;font-size:12px"></select>
+      </div>
+      <div class="tbl-wrap">
+        <table id="mainTable">
+          <thead><tr>
+            <th data-col="s"    onclick="sortTable('s',this)">Seg</th>
+            <th data-col="p"    onclick="sortTable('p',this)">Política</th>
+            <th data-col="sf"   onclick="sortTable('sf',this)">Safra</th>
+            <th data-col="cl"   onclick="sortTable('cl',this)">Clientes</th>
+            <th data-col="d0"   onclick="sortTable('d0',this)">% Lim D0</th>
+            <th data-col="d7"   onclick="sortTable('d7',this)">% Lim D7</th>
+            <th data-col="d30"  onclick="sortTable('d30',this)">% Lim D30</th>
+            <th data-col="pix0"  onclick="sortTable('pix0',this)" style="color:#f59e0b">% PIX D0</th>
+            <th data-col="pix30" onclick="sortTable('pix30',this)" style="color:#f59e0b">% PIX D30</th>
+            <th data-col="u0"   onclick="sortTable('u0',this)">Usr≥80% D0</th>
+            <th data-col="u30"  onclick="sortTable('u30',this)">Usr≥80% D30</th>
+
+            <th data-col="o6"    onclick="sortTable('o6',this)">Over6@MOB1</th>
+            <th data-col="o15"   onclick="sortTable('o15',this)">Over15@MOB2</th>
+            <th data-col="over30" onclick="sortTable('over30',this)">Over30@MOB3</th>
+          </tr></thead>
+          <tbody id="tabelaBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-curva-pol" class="tab-pane">
+    <div class="card">
+      <h2>Selecione políticas para comparar curvas (até 6)</h2>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <select id="polSeg" onchange="populatePolSelect()" style="background:#1a1d27;border:1px solid #374151;color:#e0e0e0;padding:5px 10px;border-radius:6px;font-size:12px">
+          <option value="micro_tc">micro_tc</option>
+          <option value="tc_full">tc_full</option>
+        </select>
+        <select id="polSelect" multiple size="6" class="curve-select" onchange="renderCurvaPol()" style="height:130px"></select>
+        <select id="polSafra" onchange="renderCurvaPol()" style="background:#1a1d27;border:1px solid #374151;color:#e0e0e0;padding:5px 10px;border-radius:6px;font-size:12px"></select>
+      </div>
+      <canvas id="chartCurvaPol" style="max-height:320px"></canvas>
+    </div>
+  </div>
+
+  <div id="tab-safra-comp" class="tab-pane">
+    <div class="grid g2">
+      <div class="card">
+        <h2>micro_tc — % usuários ≥80% limite D0 · Out/25→Mar/26 por política</h2>
+        <canvas id="chartSafraMicro"></canvas>
+      </div>
+      <div class="card">
+        <h2>tc_full — % usuários ≥80% limite D0 · Out/25→Mar/26 por política</h2>
+        <canvas id="chartSafraFull"></canvas>
+      </div>
+    </div>
+    <div class="insight">
+      <strong>Como ler:</strong> cada grupo de barras é uma política; barras consecutivas = Out/25 → Mar/26.
+      Barra crescendo mês a mês = piora do comportamento. Barra estável = comportamento consistente.
+      <strong>Over30@MOB3</strong> disponível para Out e Nov/2025 — confirme se risco está alinhado com utilização.
+    </div>
+  </div>
+  <div id="tab-canal" class="tab-pane">
+    <div class="card">
+      <h2>Comparativo por Canal de Aquisição — métricas agregadas</h2>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <select id="canalSafra" onchange="renderCanalTab()" style="background:#1a1d27;border:1px solid #374151;color:#e0e0e0;padding:5px 10px;border-radius:6px;font-size:12px"></select>
+        <select id="canalSeg" onchange="renderCanalTab()" style="background:#1a1d27;border:1px solid #374151;color:#e0e0e0;padding:5px 10px;border-radius:6px;font-size:12px">
+          <option value="all">Todos os segmentos</option>
+          <option value="tc_full">tc_full</option>
+          <option value="micro_tc">micro_tc</option>
+        </select>
+        <span style="font-size:10px;color:#6b7280">Clique em um canal para ver o detalhamento por dimensão</span>
+      </div>
+      <div class="grid g2" style="margin-bottom:18px">
+        <div><canvas id="chartCanalOver" style="max-height:220px"></canvas></div>
+        <div><canvas id="chartCanalUso" style="max-height:220px"></canvas></div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="canalSummaryTable">
+          <thead><tr>
+            <th style="text-align:left">Canal</th>
+            <th>Clientes</th>
+            <th>D0%</th><th>D7%</th><th>D30%</th>
+            <th>Usr≥80% D0</th><th>Usr≥80% D30</th>
+            <th style="color:#f59e0b">Over6@MOB1</th>
+            <th style="color:#f59e0b">Over15@MOB2</th>
+            <th style="color:#ef4444">Over30@MOB3</th>
+          </tr></thead>
+          <tbody id="canalTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<!-- ── PERFIS DE RISCO ─────────────────────────────────────────────────────── -->
+<div class="sec" style="margin-top:22px;margin-bottom:8px">
+  <div class="sec-title"><span class="s-orange"></span>Perfis de Risco — Comparativo Cross-Política · Agregado por Tipo de Cliente</div>
+  <div style="font-size:11px;color:#6b7280;margin-bottom:14px">Agrega todos os dados (politicas + safras) por valor de cluster — mostra o perfil puro do usuário, independente de quando ou em qual política foi aprovado. Clique em um perfil para ver similaridade cross-dimensão.</div>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Dimensão</label>
+      <select id="perf-dim" class="perf-sel" onchange="renderPerfiles()">
+        <option value="RANGE_BUREAU">RANGE BUREAU</option>
+        <option value="RATING_TC">RATING TC</option>
+        <option value="FLAG_APP_ATIVO">APP ATIVO</option>
+        <option value="FLAG_SELLERS">SELLERS</option>
+        <option value="NISE_TAG">NISE TAG</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Segmento</label>
+      <select id="perf-seg" class="perf-sel" onchange="renderPerfiles()">
+        <option value="all">Todos</option>
+        <option value="tc_full">tc_full</option>
+        <option value="micro_tc">micro_tc</option>
+      </select>
+    </div>
+    <div style="font-size:11px;color:#6b7280;align-self:flex-end;padding-bottom:6px">
+      Eixo Y usa Over30@MOB3 (Abr–Dez/25) · Cards incluem Over6 e Over15
+    </div>
+  </div>
+
+  <div class="grid g2" style="align-items:start">
+    <div class="card">
+      <h2>Mapa de Risco — D30 × Over30 (cada bolha = 1 perfil · tamanho = volume de clientes)</h2>
+      <div style="position:relative;height:320px"><canvas id="perf-bubble"></canvas></div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:10px;color:#6b7280">
+        <span><span style="color:#10b981">■</span> Conservador (baixo uso + baixo risco)</span>
+        <span><span style="color:#3b82f6">■</span> Alto uso · sem risco</span>
+        <span><span style="color:#f97316">■</span> Risco independente (baixo uso + alto risco)</span>
+        <span><span style="color:#ef4444">■</span> Stress de crédito (alto uso + alto risco)</span>
+      </div>
+    </div>
+    <div class="card" style="min-height:320px">
+      <h2>Detalhe do perfil + vizinhos mais próximos (KNN cross-dimensão)</h2>
+      <div id="perf-detail"><div class="perf-nodata">Clique em uma bolha no mapa para ver o perfil detalhado e os perfis mais similares em outras dimensões</div></div>
+    </div>
+  </div>
+
+  <div class="perf-cards-grid" id="perf-cards"></div>
+</div>
+
+<!-- ── DRILL-DOWN MODAL ─────────────────────────────────────────────────── -->
+<div id="drillModal" onclick="if(event.target===this)closeDrilldown()">
+  <div class="dm-box">
+    <div class="dm-header">
+      <div>
+        <h3 id="dm-title">—</h3>
+        <p id="dm-sub">—</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+        <select id="dm-safra" class="dm-safra-sel" onchange="renderDrilldown()"></select>
+        <button class="dm-close" onclick="closeDrilldown()">✕</button>
+      </div>
+    </div>
+    <div class="dm-tabs" id="dm-tabs">
+      <button class="dm-tab active" onclick="setDimTab('RANGE_BUREAU',this)">RANGE BUREAU</button>
+      <button class="dm-tab" onclick="setDimTab('RATING_TC',this)">RATING TC</button>
+      <button class="dm-tab" onclick="setDimTab('FLAG_APP_ATIVO',this)">APP ATIVO</button>
+      <button class="dm-tab" onclick="setDimTab('FLAG_SELLERS',this)">SELLERS</button>
+      <button class="dm-tab" onclick="setDimTab('NISE_TAG',this)">NISE TAG</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 22px;background:#0a0d14;border-bottom:1px solid #1f2937;font-size:11px">
+      <span style="color:#4b5563;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Detalhar por</span>
+      <select id="dm-dim2" onchange="renderDrilldown()"
+        style="background:#111827;border:1px solid #374151;color:#e0e0e0;padding:3px 8px;border-radius:5px;font-size:11px;cursor:pointer">
+        <option value="">— nenhuma —</option>
+      </select>
+      <span id="dm-dim2-note" style="color:#4b5563;font-size:10px"></span>
+    </div>
+    <div class="dm-body" id="dm-body">
+      <div class="dm-chart-wrap"><canvas id="dm-chart"></canvas></div>
+      <div id="dm-table"></div>
+    </div>
+  </div>
+</div>
+
+<footer>Últimos 12 meses · Abr/2025–Abr/2026 · Métrica: utilização acumulada do limite global · Gerado em 14/04/2026 · Over30@MOB3 disponível até Dez/2025; Jan/2026+ a maturar (~Mai–Ago/2026)</footer>
+
+<script>
+// ─── DADOS MACRO ─────────────────────────────────────────────────────────────
+// ── DATA loaded dynamically from /api/data ──────────────────────────────────
+let POL_DATA = [], CROSS_DATA = {}, CLUSTER_DATA = {}, CANAL_CLUSTER = {},
+    CANAL_DIM_DATA = {}, CANAL_CROSS_DATA = {}, MACRO = {};
+let ALL_SAFRAS = [];
+
+(function loadDashboardData() {
+  const overlay = document.createElement('div');
+  overlay.id = 'data-loading-overlay';
+  overlay.innerHTML = '<div style="position:fixed;inset:0;background:rgba(10,13,20,.85);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px"><div style="width:48px;height:48px;border:4px solid #374151;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite"></div><span style="color:#9ca3af;font-size:13px">Carregando dados...</span></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+  document.body.appendChild(overlay);
+
+  fetch('/api/data')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => {
+      POL_DATA          = d.pol_data;
+      CROSS_DATA        = d.cross_data;
+      CLUSTER_DATA      = d.cluster_data;
+      CANAL_CLUSTER     = d.canal_cluster;
+      CANAL_DIM_DATA    = d.canal_dim_data;
+      CANAL_CROSS_DATA  = d.canal_cross_data;
+      MACRO             = d.macro;
+
+      // Inject CANAL_CLUSTER into CLUSTER_DATA (same as before)
+      Object.keys(CANAL_CLUSTER).forEach(k => {
+        if (!CLUSTER_DATA[k]) CLUSTER_DATA[k] = {};
+        CLUSTER_DATA[k]['FLAG_CANAL_AQUISICAO_SIMP'] = CANAL_CLUSTER[k];
+      });
+
+      ALL_SAFRAS = [...new Set(POL_DATA.map(d => d.sf))].sort();
+
+      document.getElementById('data-loading-overlay').remove();
+      renderKPIs();
+      renderCurvasGlobais();
+      renderTabela();
+      populatePolSelect();
+      const sfFilter = document.getElementById('safraFilter');
+      if (sfFilter) sfFilter.innerHTML = '<option value="all">Todas as safras</option>' +
+        ALL_SAFRAS.map(sf => `<option value="${sf}">${SF_LABELS[sf] || sf}</option>`).join('');
+      const canalSafraEl = document.getElementById('canalSafra');
+      if (canalSafraEl) canalSafraEl.innerHTML = '<option value="all">Todas as safras</option>' +
+        ALL_SAFRAS.map(sf => `<option value="${sf}">${SF_LABELS[sf] || sf}</option>`).join('');
+      const polSafraEl = document.getElementById('polSafra');
+      if (polSafraEl) {
+        polSafraEl.innerHTML = ALL_SAFRAS.map(sf => `<option value="${sf}">${SF_LABELS[sf] || sf}</option>`).join('') +
+          '<option value="all">Todas (média)</option>';
+        polSafraEl.value = ALL_SAFRAS[ALL_SAFRAS.length - 2] || 'all';
+      }
+      renderPerfiles();
+    })
+    .catch(err => {
+      document.getElementById('data-loading-overlay').innerHTML =
+        '<div style="position:fixed;inset:0;background:rgba(10,13,20,.9);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:12px"><span style="color:#ef4444;font-size:20px">⚠</span><span style="color:#e0e0e0;font-size:14px">Erro ao carregar dados</span><span style="color:#6b7280;font-size:12px">' + err.message + '</span></div>';
+    });
+})();
+
+
+
+const SF_LABELS = {'all':'Todas as safras','2025-04':'Abr/25','2025-05':'Mai/25','2025-06':'Jun/25','2025-07':'Jul/25','2025-08':'Ago/25','2025-09':'Set/25','2025-10':'Out/25','2025-11':'Nov/25','2025-12':'Dez/25','2026-01':'Jan/26','2026-02':'Fev/26','2026-03':'Mar/26','2026-04':'Abr/26*','2026-05':'Mai/26*'};
+const COMP_SAFRAS = ['2025-10','2025-11','2025-12','2026-01','2026-02','2026-03'];
+const COMP_COLORS = ['rgba(99,102,241,.85)','rgba(59,130,246,.85)','rgba(16,185,129,.85)','rgba(245,158,11,.85)','rgba(239,68,68,.85)','rgba(168,85,247,.85)'];
+const COLORS = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#a855f7','#ec4899','#14b8a6'];
+const LC = '#9ca3af';
+const GC = '#1f2937';
+const baseOpts = (ylabel) => ({
+  responsive:true, maintainAspectRatio:true,
+  plugins:{legend:{labels:{color:LC,font:{size:10}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}},
+  scales:{
+    x:{ticks:{color:LC,font:{size:10}},grid:{color:'#1f2937'}},
+    y:{ticks:{color:LC,font:{size:10},callback:v=>v+'%'},grid:{color:'#1f2937'},title:{display:true,text:ylabel,color:'#6b7280',font:{size:9}}}
+  }
+});
+
+let segState='all', sortCol='sf', sortAsc=true;
+let chartCM=null, chartCU=null, chartCP=null, chartSM=null, chartSF=null;
+
+function fmtN(n){
+  if(n==null) return '—';
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1)+'k';
+  return String(n);
+}
+function pill(v,thr1=30,thr2=20){
+  if(v==null) return '<span style="color:#4b5563">—</span>';
+  if(v>=thr1) return `<span class="pill p-hi">${v}%</span>`;
+  if(v>=thr2) return `<span class="pill p-md">${v}%</span>`;
+  return `<span class="pill p-lo">${v}%</span>`;
+}
+function miniBar(v,max=100,color='#3b82f6'){
+  const w=Math.min(v||0,max)/max*80;
+  return `<div class="mini-bar"><div class="mini-fill" style="width:${w}px;background:${color}"></div></div>`;
+}
+function mkChart(id,type,data,opts){
+  const el=document.getElementById(id); if(!el) return null;
+  const ex=Chart.getChart(el); if(ex) ex.destroy();
+  return new Chart(el.getContext('2d'),{type,data,options:opts});
+}
+function mobCell(val,sf,metric){
+  if(val!=null){
+    const cls=val>=5?'p-hi':val>=3.5?'p-md':'p-lo';
+    return `<span class="pill ${cls}">${val.toFixed?val.toFixed(1):val}%</span>`;
+  }
+  const pending={
+    over6:  {'2026-04':'Jun/26','2026-05':'Jul/26'},
+    over15: {'2026-03':'Jun/26','2026-04':'Jul/26','2026-05':'Ago/26'},
+    over30: {'2026-02':'Jun/26','2026-03':'Jul/26','2026-04':'Ago/26','2026-05':'Set/26'},
+  };
+  const when=(pending[metric]||{})[sf];
+  return when?`<span style="color:#4b5563;font-size:11px">⏳ ${when}</span>`:`<span style="color:#4b5563;font-size:11px">—</span>`;
+}
+function over30Cell(v,sf){ return mobCell(v,sf,'over30'); }
+function safraColor(seg,idx,total){
+  const isPartial=idx===total-1;
+  if(isPartial) return 'rgba(251,191,36,0.85)';
+  const alpha=(0.15+(idx/(Math.max(total-2,1)))*0.85).toFixed(2);
+  return seg==='micro_tc'?`rgba(239,68,68,${alpha})`:`rgba(59,130,246,${alpha})`;
+}
+function canalCell(seg,pol,sf){
+  const arr=(CLUSTER_DATA[`${seg}||${pol}||${sf}`]||{})['FLAG_CANAL_AQUISICAO_SIMP'];
+  if(!arr||!arr.length) return '<span style="color:#6b7280;font-size:10px">—</span>';
+  const total=arr.reduce((s,r)=>s+(r.cl||0),0);
+  if(!total) return '<span style="color:#6b7280;font-size:10px">—</span>';
+  const colors={'ML':'#15803d','MP':'#1d4ed8','EA - MP':'#b45309','N/D':'#9ca3af'};
+  return arr.filter(r=>r.val!=='N/D'&&r.cl>0).map(r=>{
+    const pct=Math.round(r.cl/total*100);
+    const c=colors[r.val]||'#6b7280';
+    const lbl=r.val==='EA - MP'?'EA':r.val;
+    return `<span style="background:${c};color:#fff;border-radius:3px;padding:1px 5px;font-size:9px;font-weight:700;display:inline-block;margin:1px">${lbl} ${pct}%</span>`;
+  }).join('')||'<span style="color:#6b7280;font-size:10px">—</span>';
+}
+
+// ─── KPIs ─────────────────────────────────────────────────────────────────────
+function renderKPIs(){
+  const segs=segState==='all'?['micro_tc','tc_full']:segState==='micro_tc'?['micro_tc']:['tc_full'];
+  const complete=ALL_SAFRAS.filter(sf=>sf!=='2026-04'&&sf!=='2026-05');
+  let totCl=0,sumD0=0,sumU80=0,sumO30=0,cntO30=0;
+  segs.forEach(s=>{
+    complete.forEach(sf=>{
+      const d=MACRO[s]?.[sf]; if(!d) return;
+      totCl+=d.cl; sumD0+=d.d0*d.cl; sumU80+=d.u80d0*d.cl;
+      if(d.over30!=null){sumO30+=d.over30*d.cl;cntO30+=d.cl;}
+    });
+  });
+  if(!totCl) return;
+  document.getElementById('kpi-cl').textContent=fmtN(totCl);
+  document.getElementById('kpi-d0').textContent=(sumD0/totCl).toFixed(1)+'%';
+  document.getElementById('kpi-u80').textContent=(sumU80/totCl).toFixed(1)+'%';
+  document.getElementById('kpi-over30').textContent=cntO30>0?(sumO30/cntO30).toFixed(2)+'%':'—';
+  const micro12=complete.reduce((a,sf)=>{const d=MACRO.micro_tc?.[sf];return d?a+d.cl:a;},0);
+  const full12=complete.reduce((a,sf)=>{const d=MACRO.tc_full?.[sf];return d?a+d.cl:a;},0);
+  const sub=document.getElementById('kpi-cl-sub');
+  if(sub) sub.textContent=`micro: ${fmtN(micro12)} · full: ${fmtN(full12)}`;
+}
+
+// ─── CURVAS GLOBAIS ───────────────────────────────────────────────────────────
+function renderCurvasGlobais(){
+  const segs=segState==='all'?['micro_tc','tc_full']:segState==='micro_tc'?['micro_tc']:['tc_full'];
+  const labM=['D0','D3','D7','D14','D30'], labU=['D0','D7','D30'];
+  const dsM=[], dsU=[];
+  const N=ALL_SAFRAS.length;
+  segs.forEach(s=>{
+    ALL_SAFRAS.forEach((sf,i)=>{
+      const d=MACRO[s]?.[sf]; if(!d) return;
+      const isP=d.parcial||sf==='2026-04'||sf==='2026-05';
+      const col=safraColor(s,i,N);
+      const lbl=`${s==='micro_tc'?'μ':'F'} ${SF_LABELS[sf]||sf}`;
+      const thick=i>=N-3?2:1;
+      const dash=isP?[4,3]:(i<N-5?[2,2]:undefined);
+      const pr=i>=N-3?3:1;
+      dsM.push({label:lbl,data:[d.d0,d.d3,d.d7,d.d14,d.d30],borderColor:col,backgroundColor:'transparent',borderDash:dash,tension:.3,pointRadius:pr,borderWidth:thick,spanGaps:true});
+      dsU.push({label:lbl,data:[d.u80d0,d.u80d7,d.u80d30],borderColor:col,backgroundColor:'transparent',borderDash:dash,tension:.3,pointRadius:pr,borderWidth:thick});
+    });
+  });
+  const noLegend={plugins:{legend:{display:false}}};
+  if(chartCM){chartCM.destroy();chartCM=null;}
+  if(chartCU){chartCU.destroy();chartCU=null;}
+  chartCM=mkChart('chartCurvaMedia','line',{labels:labM,datasets:dsM},{...baseOpts('%'),...noLegend,interaction:{mode:'index',intersect:false}});
+  chartCU=mkChart('chartCurvaUsuarios','line',{labels:labU,datasets:dsU},{...baseOpts('%'),...noLegend,interaction:{mode:'index',intersect:false}});
+}
+
+// ─── TABELA ───────────────────────────────────────────────────────────────────
+function renderTabela(){
+  const sf=document.getElementById('safraFilter').value;
+  const q=(document.getElementById('searchPol').value||'').toLowerCase();
+  let rows=POL_DATA.filter(d=>{
+    if(segState!=='all'&&d.s!==segState) return false;
+    if(sf!=='all'&&d.sf!==sf) return false;
+    if(q&&!d.p.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  rows.sort((a,b)=>{
+    const va=a[sortCol]??-Infinity, vb=b[sortCol]??-Infinity;
+    if(typeof va==='string') return sortAsc?va.localeCompare(vb):vb.localeCompare(va);
+    return sortAsc?va-vb:vb-va;
+  });
+  const tbody=document.getElementById('tabelaBody');
+  tbody.innerHTML=rows.map(d=>{
+    const sc=d.s==='micro_tc'?'#ef4444':'#3b82f6';
+    const rowStyle=d.parcial?'background:rgba(251,191,36,.04);':'';
+    const sfCell=d.parcial
+      ?`<td style="color:#fbbf24;font-style:italic">${SF_LABELS[d.sf]||d.sf} <span style="font-size:10px;background:#451a03;color:#fbbf24;padding:1px 5px;border-radius:10px;font-style:normal">parcial</span></td>`
+      :`<td>${SF_LABELS[d.sf]||d.sf}</td>`;
+    return `<tr style="${rowStyle}">
+      <td><span style="color:${sc};font-weight:700;font-size:11px">${d.s}</span></td>
+      <td style="max-width:240px;white-space:normal;font-size:11px"><span class="pol-link" onclick="openDrilldown('${d.s}','${d.p.replace(/'/g,"\\'")}','${d.sf}')">${d.p}</span></td>
+      ${sfCell}
+      <td>${fmtN(d.cl)}</td>
+      <td>${d.d0??'—'}% ${d.d0?miniBar(d.d0,120,sc):''}</td>
+      <td>${d.d7??'—'}%</td>
+      <td>${d.d30??'—'}%</td>
+      <td style="color:#f59e0b;font-weight:600">${d.pix0!=null?d.pix0+'%':'—'}</td>
+      <td style="color:#f59e0b;font-weight:600">${d.pix30!=null?d.pix30+'%':'—'}</td>
+      <td>${pill(d.u0,30,15)}</td>
+      <td>${pill(d.u30,70,40)}</td>
+      <td>${mobCell(d.o6,  d.sf,'over6')}</td>
+      <td>${mobCell(d.o15, d.sf,'over15')}</td>
+      <td>${over30Cell(d.over30,d.sf)}</td>
+    </tr>`;
+  }).join('');
+}
+function sortTable(col,thEl){
+  if(sortCol===col) sortAsc=!sortAsc; else{sortCol=col;sortAsc=false;}
+  document.querySelectorAll('#mainTable th').forEach(th=>{
+    th.classList.remove('sorted');
+    const base=th.dataset.col?th.textContent.replace(/ [↑↓]$/,''):th.textContent;
+    th.textContent=base;
+  });
+  if(thEl){thEl.classList.add('sorted');thEl.textContent=thEl.textContent.replace(/ [↑↓]$/,'')+(sortAsc?' ↑':' ↓');}
+  renderTabela();
+}
+
+// ─── CURVAS POR POLÍTICA ──────────────────────────────────────────────────────
+function populatePolSelect(){
+  const seg=document.getElementById('polSeg').value;
+  const pols=[...new Set(POL_DATA.filter(d=>d.s===seg).map(d=>d.p))];
+  const sel=document.getElementById('polSelect');
+  sel.innerHTML=pols.map(p=>`<option value="${p}">${p}</option>`).join('');
+  [...sel.options].slice(0,4).forEach(o=>o.selected=true);
+  renderCurvaPol();
+}
+function renderCurvaPol(){
+  const seg=document.getElementById('polSeg').value;
+  const sf=document.getElementById('polSafra').value;
+  const sel=[...document.getElementById('polSelect').selectedOptions].map(o=>o.value);
+  const labels=['D0','D3','D7','D14','D30'];
+  const datasets=[];
+  sel.forEach((p,i)=>{
+    let r=POL_DATA.filter(d=>d.s===seg&&d.p===p&&d.d0!=null);
+    if(sf!=='all') r=r.filter(d=>d.sf===sf);
+    if(!r.length) return;
+    const totCl=r.reduce((a,d)=>a+(d.cl||0),0);
+    const avg=k=>r.reduce((a,d)=>a+(d[k]||0)*(d.cl||0),0)/totCl;
+    datasets.push({label:p.length>40?p.slice(0,40)+'…':p,data:[avg('d0'),avg('d3'),avg('d7'),avg('d14'),avg('d30')],borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',tension:.3,pointRadius:5,borderWidth:2});
+  });
+  if(chartCP){chartCP.destroy();chartCP=null;}
+  chartCP=mkChart('chartCurvaPol','line',{labels,datasets},{...baseOpts('%'),interaction:{mode:'index',intersect:false}});
+}
+
+// ─── COMPARATIVO SAFRAS ───────────────────────────────────────────────────────
+function renderSafraComp(){
+  const topMicro=['BAU-MTC SEGMENTOS PREFERENCIAIS','BAU-MTC BAU','Mar Aberto RTS','Mar Aberto Async','BAU-6A SELLERS','BAU-5A SELLERS'];
+  const topFull =['Mar Aberto RTS','BAU-CARD TO CARD OPF','BAU-BAU GRUPO 1y2 SIN CAMBIOS','BAU-HEAVY USERS','BAU-USUARIOS MP VIP','TEST REACH-TEST NO ECOSISTEMATICOS'];
+  function buildDs(pols,seg){
+    return COMP_SAFRAS.map((sf,i)=>({
+      label:SF_LABELS[sf]||sf,
+      data:pols.map(p=>{const r=POL_DATA.find(d=>d.s===seg&&d.p===p&&d.sf===sf);return r?r.u0:null;}),
+      backgroundColor:COMP_COLORS[i],borderColor:COMP_COLORS[i].replace('.85','.95'),borderWidth:1
+    }));
+  }
+  const sm=topMicro.map(p=>p.replace('BAU-MTC ','').replace('BAU-','').replace(' SELLERS','S'));
+  const sf=topFull.map(p=>p.replace('BAU-','').replace('TEST REACH-','TR-').replace(' USUARIOS MP VIP','VIP'));
+  const barOpts=(y)=>({...baseOpts(y),plugins:{legend:{labels:{color:LC,font:{size:10}}}}});
+  if(chartSM){chartSM.destroy();chartSM=null;}
+  if(chartSF){chartSF.destroy();chartSF=null;}
+  chartSM=mkChart('chartSafraMicro','bar',{labels:sm,datasets:buildDs(topMicro,'micro_tc')},barOpts('% usr ≥80% D0'));
+  chartSF=mkChart('chartSafraFull','bar',{labels:sf,datasets:buildDs(topFull,'tc_full')},barOpts('% usr ≥80% D0'));
+}
+function setSegState(seg,btn){
+  segState=seg;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.className='seg-btn');
+  if(seg==='all') btn.className='seg-btn act-all';
+  else if(seg==='micro_tc') btn.className='seg-btn act-micro';
+  else btn.className='seg-btn act-full';
+  renderKPIs(); renderCurvasGlobais(); renderTabela();
+}
+
+// ─── DRILL-DOWN STATE ─────────────────────────────────────────────────────────
+let _dm = {seg:null, pol:null, sf:null, dim:'RANGE_BUREAU', mode:'policy', canal:null};
+let chartDM = null;
+
+function _hasDrillData(seg, pol, sf){
+  if(CLUSTER_DATA[`${seg}||${pol}||${sf}`]) return true;
+  if(seg==='micro_tc' && CLUSTER_DATA[`tc_full||${pol}||${sf}`]) return true;
+  return false;
+}
+function openDrilldown(seg, pol, sf){
+  _dm.seg=seg; _dm.pol=pol; _dm.dim='RANGE_BUREAU'; _dm.mode='policy'; _dm.canal=null;
+  // All safras in pol_data for this policy/segment
+  const polSafras = POL_DATA.filter(d=>d.s===seg&&d.p===pol).map(d=>d.sf).sort();
+  // Auto-select: use clicked sf if it has data, else snap to nearest sf with data
+  let selectedSf = sf;
+  if(!_hasDrillData(seg, pol, sf)){
+    const withData = polSafras.filter(s=>_hasDrillData(seg, pol, s)).sort();
+    if(withData.length > 0){
+      // snap to closest safra with data (YYYY-MM strings sort correctly)
+      const after = withData.filter(s=>s>=sf);
+      selectedSf = after.length>0 ? after[0] : withData[withData.length-1];
+    }
+  }
+  _dm.sf = selectedSf;
+  const sel = document.getElementById('dm-safra');
+  sel.innerHTML = polSafras.map(s=>`<option value="${s}"${s===selectedSf?'selected':''}>${SF_LABELS[s]}</option>`).join('');
+  document.getElementById('dm-title').textContent = pol;
+  document.getElementById('dm-sub').textContent = `${seg} · ${SF_LABELS[selectedSf]}`;
+  document.querySelectorAll('.dm-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  _dm.dim='RANGE_BUREAU';
+  _updateDim2Opts('RANGE_BUREAU');
+  const dim2El2=document.getElementById('dm-dim2'); if(dim2El2) dim2El2.value='';
+  document.getElementById('drillModal').style.display='block';
+  document.body.style.overflow='hidden';
+  renderDrilldown();
+}
+function closeDrilldown(){
+  document.getElementById('drillModal').style.display='none';
+  document.body.style.overflow='';
+  if(chartDM){chartDM.destroy();chartDM=null;}
+  _dm.mode='policy'; _dm.canal=null;
+}
+const DIM_LABELS = {
+  'RANGE_BUREAU':'Range Bureau','RATING_TC':'Rating TC',
+  'FLAG_APP_ATIVO':'App Ativo','FLAG_SELLERS':'Sellers','NISE_TAG':'Nise Tag',
+  'FLAG_CANAL_AQUISICAO_SIMP':'Canal Aquisição'
+};
+const ALL_DIMS = ['RANGE_BUREAU','RATING_TC','FLAG_APP_ATIVO','FLAG_SELLERS','NISE_TAG','FLAG_CANAL_AQUISICAO_SIMP'];
+const DIM_SORT_ORDER = {
+  'RANGE_BUREAU':   ['A','B','C','D','E','F','G','Sem Score','N/D'],
+  'NISE_TAG':       ['BRONZE','SILVER','GOLD','PLATINUM','N/D'],
+  'RATING_TC':      ['A1','A2','B1','B2','B3','C1','C2','C3','D','J1','S/R','N/D'],
+  'FLAG_APP_ATIVO': ['1. MP','2. MP y ML','3. ML','4. Sem App Ativo','N/D'],
+  'FLAG_SELLERS':   ['INDIVIDUO','SELLER','N/D']
+};
+function _dimSort(vals, dim){
+  const order=DIM_SORT_ORDER[dim];
+  if(!order) return vals.sort();
+  return [...vals].sort((a,b)=>{
+    const ia=order.indexOf(a),ib=order.indexOf(b);
+    if(ia===-1&&ib===-1) return a.localeCompare(b);
+    return (ia===-1?999:ia)-(ib===-1?999:ib);
+  });
+}
+// compact array indices: [v1,v2,cl,d0,d7,d30,u0,u30,over6,over15,over30]
+const CI = {v1:0,v2:1,cl:2,d0:3,d7:4,d30:5,u0:6,u30:7,over6:8,over15:9,over30:10};
+
+function _updateDim2Opts(primaryDim){
+  const sel=document.getElementById('dm-dim2');
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— nenhuma —</option>'+
+    ALL_DIMS.filter(d=>d!==primaryDim).map(d=>
+      `<option value="${d}"${cur===d?' selected':''}>${DIM_LABELS[d]}</option>`
+    ).join('');
+}
+function openCanalDrillModal(canal){
+  const sfFilter=document.getElementById('canalSafra')?.value||'all';
+  const segFilter=document.getElementById('canalSeg')?.value||'all';
+  const DIMS=['RANGE_BUREAU','RATING_TC','FLAG_APP_ATIVO','FLAG_SELLERS','NISE_TAG'];
+  const PAIRS=[['RANGE_BUREAU','NISE_TAG'],['RANGE_BUREAU','FLAG_APP_ATIVO'],
+    ['RANGE_BUREAU','FLAG_SELLERS'],['RANGE_BUREAU','RATING_TC'],
+    ['NISE_TAG','FLAG_APP_ATIVO'],['NISE_TAG','FLAG_SELLERS'],['NISE_TAG','RATING_TC'],
+    ['FLAG_APP_ATIVO','FLAG_SELLERS'],['FLAG_APP_ATIVO','RATING_TC'],['FLAG_SELLERS','RATING_TC']];
+  const fakeSeg=segFilter==='all'?'tc_full':segFilter;
+  const fakePol='Canal:'+canal+'['+segFilter+']';
+  const safras=[...new Set(Object.keys(CANAL_DIM_DATA)
+    .filter(k=>k.startsWith(canal+'||')&&(segFilter==='all'||k.endsWith('||'+segFilter)))
+    .map(k=>k.split('||')[1]))].sort();
+  const toProcess=['all',...safras];
+  toProcess.forEach(sf=>{
+    const fk=`${fakeSeg}||${fakePol}||${sf}`;
+    if(CLUSTER_DATA[fk]) return;
+    CLUSTER_DATA[fk]={};
+    DIMS.forEach(dim=>{
+      const agg={};
+      Object.entries(CANAL_DIM_DATA).forEach(([key,dims])=>{
+        const p=key.split('||');
+        if(p[0]!==canal) return;
+        if(sf!=='all'&&p[1]!==sf) return;
+        if(segFilter!=='all'&&p[2]!==segFilter) return;
+        (dims[dim]||[]).forEach(r=>{
+          if(!agg[r.val]) agg[r.val]={val:r.val,cl:0,d0w:0,d7w:0,d30w:0,u0w:0,u30w:0,o6w:0,o6n:0,o15w:0,o15n:0,o30w:0,o30n:0};
+          const a=agg[r.val],n=r.cl||0;
+          a.cl+=n;a.d0w+=(r.d0||0)*n;a.d7w+=(r.d7||0)*n;a.d30w+=(r.d30||0)*n;
+          a.u0w+=(r.u0||0)*n;a.u30w+=(r.u30||0)*n;
+          if(r.over6!=null){a.o6w+=r.over6*n;a.o6n+=n;}
+          if(r.over15!=null){a.o15w+=r.over15*n;a.o15n+=n;}
+          if(r.over30!=null){a.o30w+=r.over30*n;a.o30n+=n;}
+        });
+      });
+      CLUSTER_DATA[fk][dim]=Object.values(agg).map(a=>({
+        val:a.val,cl:a.cl,
+        d0:a.cl>0?+(a.d0w/a.cl).toFixed(1):null,d7:a.cl>0?+(a.d7w/a.cl).toFixed(1):null,
+        d30:a.cl>0?+(a.d30w/a.cl).toFixed(1):null,u0:a.cl>0?+(a.u0w/a.cl).toFixed(1):null,
+        u30:a.cl>0?+(a.u30w/a.cl).toFixed(1):null,
+        over6:a.o6n>0?+(a.o6w/a.o6n).toFixed(2):null,
+        over15:a.o15n>0?+(a.o15w/a.o15n).toFixed(2):null,
+        over30:a.o30n>0?+(a.o30w/a.o30n).toFixed(2):null,
+      }));
+    });
+    CROSS_DATA[fk]={};
+    PAIRS.forEach(([d1,d2])=>{
+      [[d1,d2],[d2,d1]].forEach(([da,db])=>{
+        const pk=`${da}||${db}`,aggC={};
+        Object.entries(CANAL_CROSS_DATA).forEach(([key,pairs])=>{
+          const p=key.split('||');
+          if(p[0]!==canal) return;
+          if(sf!=='all'&&p[1]!==sf) return;
+          if(segFilter!=='all'&&p[2]!==segFilter) return;
+          (pairs[pk]||[]).forEach(r=>{
+            const k=r[0]+'||'+r[1];
+            if(!aggC[k]) aggC[k]=[r[0],r[1],0,0,0,0,0,0,0,0,0,0,0,0];
+            const a=aggC[k],n=r[2]||0;
+            a[2]+=n;for(let i=3;i<=7;i++) a[i]+=(r[i]||0)*n;
+            if(r[8]!=null){a[8]+=r[8]*n;a[11]+=n;}
+            if(r[9]!=null){a[9]+=r[9]*n;a[12]+=n;}
+            if(r[10]!=null){a[10]+=r[10]*n;a[13]+=n;}
+          });
+        });
+        CROSS_DATA[fk][pk]=Object.values(aggC).map(a=>{
+          const n=a[2]||1;
+          return [a[0],a[1],a[2],+(a[3]/n).toFixed(1),+(a[4]/n).toFixed(1),+(a[5]/n).toFixed(1),
+            +(a[6]/n).toFixed(1),+(a[7]/n).toFixed(1),
+            a[11]>0?+(a[8]/a[11]).toFixed(2):null,
+            a[12]>0?+(a[9]/a[12]).toFixed(2):null,
+            a[13]>0?+(a[10]/a[13]).toFixed(2):null];
+        });
+      });
+    });
+  });
+  _dm.mode='policy';_dm.canal=canal;_dm.seg=fakeSeg;_dm.pol=fakePol;_dm.dim='RANGE_BUREAU';
+  const sel=document.getElementById('dm-safra');
+  sel.innerHTML='<option value="all">Todas as safras</option>'+
+    safras.map(s=>`<option value="${s}">${SF_LABELS[s]||s}</option>`).join('');
+  const chosen=sfFilter==='all'?'all':(safras.includes(sfFilter)?sfFilter:(safras[safras.length-1]||'all'));
+  sel.value=chosen; _dm.sf=chosen;
+  document.getElementById('dm-title').textContent='Canal: '+canal+(segFilter!=='all'?' ('+segFilter+')':'');
+  document.getElementById('dm-sub').textContent='Canal: '+canal+(segFilter!=='all'?' · '+segFilter:'')+(chosen!=='all'?' · '+(SF_LABELS[chosen]||chosen):'');
+  document.querySelectorAll('.dm-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  _updateDim2Opts('RANGE_BUREAU');
+  const d2=document.getElementById('dm-dim2');if(d2) d2.value='';
+  document.getElementById('drillModal').style.display='block';
+  document.body.style.overflow='hidden';
+  renderDrilldown();
+}
+
+function setDimTab(dim, btn){
+  _dm.dim=dim;
+  document.querySelectorAll('.dm-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _updateDim2Opts(dim);
+  renderDrilldown();
+}
+function renderDrilldown(){
+  _dm.sf = document.getElementById('dm-safra').value;
+
+  document.getElementById('dm-sub').textContent = `${_dm.seg} · ${SF_LABELS[_dm.sf]}`;
+  const dim2El = document.getElementById('dm-dim2');
+  const dim2 = dim2El ? dim2El.value : '';
+  const key = `${_dm.seg}||${_dm.pol}||${_dm.sf}`;
+  const noteEl = document.getElementById('dm-dim2-note');
+
+  // modo cross-dimensional: qualquer par de dimensões
+  if(dim2){
+    const pairKey = `${_dm.dim}||${dim2}`;
+    let cData = CROSS_DATA[key]?.[pairKey];
+    if(!cData?.length && _dm.seg==='micro_tc'){
+      cData = CROSS_DATA[`tc_full||${_dm.pol}||${_dm.sf}`]?.[pairKey];
+    }
+    if(noteEl) noteEl.textContent = cData?.length ? `${cData.length} combinações` : 'sem dados';
+    if(chartDM){chartDM.destroy();chartDM=null;}
+    if(!cData?.length){ _renderDrillNoData(key); return; }
+    _renderDrillCross(cData, _dm.dim, dim2);
+    return;
+  }
+  if(noteEl) noteEl.textContent = '';
+
+  let rows = CLUSTER_DATA[key]?.[_dm.dim];
+  let usingFallback = false;
+  if((!rows?.length) && _dm.seg==='micro_tc'){
+    const fb = CLUSTER_DATA[`tc_full||${_dm.pol}||${_dm.sf}`]?.[_dm.dim];
+    if(fb?.length){ rows = fb; usingFallback = true; }
+  }
+  if(chartDM){chartDM.destroy();chartDM=null;}
+  if(!rows?.length){ _renderDrillNoData(key); return; }
+  _renderDrillChart(rows, usingFallback);
+}
+
+// ── cross-dimensional: generalizado para qualquer par ───────────────────────
+const CROSS_PALETTE = [
+  'rgba(59,130,246,','rgba(16,185,129,','rgba(245,158,11,','rgba(239,68,68,',
+  'rgba(168,85,247,','rgba(6,182,212,','rgba(249,115,22,','rgba(99,102,241,',
+  'rgba(236,72,153,','rgba(132,204,22,','rgba(251,191,36,','rgba(20,184,166,',
+];
+function _renderDrillCross(cData, dim1, dim2){
+  // cData is array of arrays: [v1,v2,cl,d0,d7,d30,u0,u30,over6,over15,over30]
+  const v1s=_dimSort([...new Set(cData.map(r=>r[CI.v1]))], _dm.dim);
+  const v2s=_dimSort([...new Set(cData.map(r=>r[CI.v2]))], dim2);
+  const totalCl=cData.reduce((s,r)=>s+(r[CI.cl]||0),0);
+  // cl per v1 (for within-share)
+  const clByV1={};
+  v1s.forEach(v1=>{ clByV1[v1]=cData.filter(r=>r[CI.v1]===v1).reduce((s,r)=>s+(r[CI.cl]||0),0); });
+
+  const body=document.getElementById('dm-body');
+  body.innerHTML=`<div class="dm-chart-wrap" style="height:260px"><canvas id="dm-chart"></canvas></div><div id="dm-table"></div>`;
+
+  const datasets=v2s.map((v2,i)=>({
+    label:v2,
+    data:v1s.map(v1=>{ const r=cData.find(x=>x[CI.v1]===v1&&x[CI.v2]===v2); return r?r[CI.d30]:null; }),
+    backgroundColor:CROSS_PALETTE[i%CROSS_PALETTE.length]+'0.78)',
+    borderColor:CROSS_PALETTE[i%CROSS_PALETTE.length]+'1)',
+    borderWidth:1, borderRadius:3,
+  }));
+
+  chartDM=new Chart(document.getElementById('dm-chart').getContext('2d'),{
+    type:'bar', data:{labels:v1s,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top',labels:{color:'#9ca3af',font:{size:9},boxWidth:10,padding:8}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw!=null?c.raw+'%':'—'}`}}
+      },
+      scales:{
+        x:{ticks:{color:'#6b7280',font:{size:10}},grid:{color:'#1f2937'}},
+        y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#1f2937'},
+           title:{display:true,text:'% Limite D30',color:'#6b7280',font:{size:10}}}
+      }
+    }
+  });
+
+  const hasO6=cData.some(r=>r[CI.over6]!=null);
+  const hasO30=cData.some(r=>r[CI.over30]!=null);
+  const d1L=DIM_LABELS[dim1]||dim1, d2L=DIM_LABELS[dim2]||dim2;
+  const tbl=document.getElementById('dm-table');
+  tbl.innerHTML=`<table class="dm-tbl"><thead><tr>
+    <th>${d1L}</th><th>${d2L}</th>
+    <th>Clientes</th><th>Share Geral</th><th>Share em ${d1L}</th>
+    <th>D0%</th><th>D30%</th><th>Usr≥80%</th>
+    ${hasO6?'<th>Over6</th>':''}<th>Over15</th>${hasO30?'<th>Over30</th>':''}
+  </tr></thead><tbody>`+
+  [...cData].sort((a,b)=>a[CI.v1].localeCompare(b[CI.v1])||a[CI.v2].localeCompare(b[CI.v2])).map(r=>{
+    const cl=r[CI.cl]||0;
+    const shareG=totalCl>0?(cl/totalCl*100).toFixed(1)+'%':'—';
+    const shareV=clByV1[r[CI.v1]]>0?(cl/clByV1[r[CI.v1]]*100).toFixed(1)+'%':'—';
+    return `<tr>
+      <td style="font-weight:700;color:#e0e0e0">${r[CI.v1]}</td>
+      <td style="color:#9ca3af">${r[CI.v2]}</td>
+      <td>${fmtN(cl)}</td>
+      <td style="color:#6b7280">${shareG}</td>
+      <td style="color:#60a5fa;font-weight:600">${shareV}</td>
+      <td>${r[CI.d0]!=null?r[CI.d0]+'%':'—'}</td>
+      <td>${r[CI.d30]!=null?r[CI.d30]+'%':'—'}</td>
+      <td>${pill(r[CI.u0],30,15)}</td>
+      ${hasO6?`<td>${mobCell(r[CI.over6],_dm.sf,'over6')}</td>`:''}
+      <td>${mobCell(r[CI.over15],_dm.sf,'over15')}</td>
+      ${hasO30?`<td>${over30Cell(r[CI.over30],_dm.sf)}</td>`:''}
+    </tr>`;
+  }).join('')+`</tbody></table>`;
+}
+function _renderDrillChart(rows, fallback){
+  rows = _dimSort(rows.map(r=>r.val), _dm.dim).map(v=>rows.find(r=>r.val===v)).filter(Boolean);
+  const sc = _dm.seg==='micro_tc'?'rgba(239,68,68,':'rgba(59,130,246,';
+  const labels = rows.map(r=>r.val);
+  const body = document.getElementById('dm-body');
+  const banner = fallback
+    ? `<div style="background:#1c2637;border-left:3px solid #f59e0b;padding:7px 12px;margin-bottom:10px;font-size:11px;color:#fcd34d">⚠ Exibindo dados do segmento <strong>tc_full</strong> — breakdown exclusivo <em>micro_tc</em> não disponível separadamente nesta política</div>`
+    : '';
+  body.innerHTML = banner+`<div class="dm-chart-wrap"><canvas id="dm-chart"></canvas></div><div id="dm-table"></div>`;
+
+  const hasO6r   = rows.some(r=>r.over6!=null);
+  const hasO15r  = rows.some(r=>r.over15!=null);
+  const hasO30r  = rows.some(r=>r.over30!=null);
+  const datasets = [
+    {label:'% Lim D0',   data:rows.map(r=>r.d0),    backgroundColor:sc+'0.75)', yAxisID:'y'},
+    {label:'% Lim D30',  data:rows.map(r=>r.d30),   backgroundColor:sc+'0.45)', yAxisID:'y'},
+    {label:'Usr≥80% D0', data:rows.map(r=>r.u0),    backgroundColor:'rgba(245,158,11,0.75)', yAxisID:'y'},
+  ];
+  if(hasO6r)  datasets.push({label:'Over6@MOB1',  data:rows.map(r=>r.over6),  backgroundColor:'rgba(20,184,166,0.8)',  yAxisID:'y2'});
+  if(hasO15r) datasets.push({label:'Over15@MOB2', data:rows.map(r=>r.over15), backgroundColor:'rgba(99,102,241,0.8)',  yAxisID:'y2'});
+  if(hasO30r) datasets.push({label:'Over30@MOB3', data:rows.map(r=>r.over30), backgroundColor:'rgba(168,85,247,0.8)',  yAxisID:'y2'});
+  const hasAnyMob = hasO6r||hasO15r||hasO30r;
+
+  const el = document.getElementById('dm-chart');
+  chartDM = new Chart(el.getContext('2d'),{
+    type:'bar',
+    data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:LC,font:{size:10},boxWidth:14}}},
+      scales:{
+        x:{ticks:{color:LC,font:{size:10}},grid:{color:GC}},
+        y:{ticks:{color:LC,font:{size:10}},grid:{color:GC},title:{display:true,text:'%',color:LC,font:{size:10}}},
+        ...(hasAnyMob?{y2:{position:'right',ticks:{color:'#a78bfa',font:{size:10}},grid:{drawOnChartArea:false},title:{display:true,text:'Mob%',color:'#a78bfa',font:{size:10}}}}:{})
+      }
+    }
+  });
+
+  // mini table — share + over columns
+  const totalCl1 = rows.reduce((s,r)=>s+(r.cl||0),0);
+  const tbl = document.getElementById('dm-table');
+  tbl.innerHTML = `<table class="dm-tbl"><thead><tr>
+    <th>${DIM_LABELS[_dm.dim]||_dm.dim}</th><th>Clientes</th><th>Share</th>
+    <th>% Lim D0</th><th>% Lim D30</th><th>Usr≥80% D0</th>
+    <th>Over6@MOB1</th><th>Over15@MOB2</th><th>Over30@MOB3</th>
+  </tr></thead><tbody>`+
+  rows.map(r=>{
+    const share=totalCl1>0?((r.cl||0)/totalCl1*100).toFixed(1)+'%':'—';
+    return `<tr>
+      <td style="font-weight:700;color:#e0e0e0">${r.val}</td>
+      <td>${fmtN(r.cl)}</td>
+      <td style="color:#60a5fa;font-weight:600">${share}</td>
+      <td>${r.d0!=null?r.d0+'%':'—'}</td>
+      <td>${r.d30!=null?r.d30+'%':'—'}</td>
+      <td>${pill(r.u0,30,15)}</td>
+      <td>${mobCell(r.over6,  _dm.sf,'over6')}</td>
+      <td>${mobCell(r.over15, _dm.sf,'over15')}</td>
+      <td>${over30Cell(r.over30, _dm.sf)}</td>
+    </tr>`;
+  }).join('')+
+  `</tbody></table>`;
+}
+function _renderDrillNoData(key){
+  const body = document.getElementById('dm-body');
+  body.innerHTML = `
+    <div class="dm-nodata">
+      <strong style="font-size:15px;color:#e5e7eb">Dados não disponíveis</strong>
+      <span style="font-size:13px;color:#9ca3af;margin-top:6px">${_dm.pol}</span>
+      <span style="font-size:12px;color:#6b7280">${_dm.seg} · ${SF_LABELS[_dm.sf]}</span>
+      <span style="font-size:11px;color:#4b5563;margin-top:10px">Esta política não possui registros na staging table para esta combinação de safra / segmento.</span>
+    </div>`;
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function copyQuery(){
+  const q=document.getElementById('dm-q-block');
+  const txt=q?q.innerText.replace('copiar','').trim():'';
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn=q.querySelector('.dm-copy');
+    if(btn){btn.textContent='✓ copiado';setTimeout(()=>btn.textContent='copiar',2000);}
+  });
+}
+
+// ─── CONTROLES ────────────────────────────────────────────────────────────────
+function setSeg(seg,btn){
+  segState=seg;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.className='seg-btn');
+  if(seg==='all') btn.className='seg-btn act-all';
+  else if(seg==='micro_tc') btn.className='seg-btn act-micro';
+  else btn.className='seg-btn act-full';
+  renderKPIs(); renderCurvasGlobais(); renderTabela();
+}
+let chartCanalOver=null, chartCanalUso=null;
+let _canalDrill={canal:null,sf:null,seg:null,dim:'RANGE_BUREAU'};
+let chartCanalDrill=null;
+
+function renderCanalTab(){
+  const sf=document.getElementById('canalSafra').value;
+  const seg=document.getElementById('canalSeg').value;
+  const agg={};
+
+  Object.entries(CANAL_CLUSTER).forEach(([key,canais])=>{
+    const parts=key.split('||');
+    const kseg=parts[0],kpol=parts[1],ksf=parts[2];
+    if(seg!=='all'&&kseg!==seg) return;
+    if(sf!=='all'&&ksf!==sf) return;
+    canais.forEach(c=>{
+      if(!agg[c.val]) agg[c.val]={cl:0,d0w:0,d7w:0,d30w:0,u0w:0,u30w:0,o6w:0,o6n:0,o15w:0,o15n:0,o30w:0,o30n:0};
+      const a=agg[c.val],n=c.cl||0;
+      a.cl+=n; a.d0w+=(c.d0||0)*n; a.d7w+=(c.d7||0)*n; a.d30w+=(c.d30||0)*n;
+      a.u0w+=(c.u0||0)*n; a.u30w+=(c.u30||0)*n;
+      if(c.over6!=null){a.o6w+=c.over6*n;a.o6n+=n;}
+      if(c.over15!=null){a.o15w+=c.over15*n;a.o15n+=n;}
+      if(c.over30!=null){a.o30w+=c.over30*n;a.o30n+=n;}
+    });
+  });
+
+  const ORDER=['ML','MP','EA - MP','N/D'];
+  const COLORS={'ML':'#15803d','MP':'#1d4ed8','EA - MP':'#b45309','N/D':'#6b7280'};
+  const BG={'ML':'rgba(21,128,61,.75)','MP':'rgba(29,78,216,.75)','EA - MP':'rgba(180,83,9,.75)','N/D':'rgba(107,114,128,.75)'};
+  const oCell=v=>{
+    if(v==null) return '<span style="color:#6b7280">—</span>';
+    const c=v>4?'#ef4444':v>2.5?'#f59e0b':'#4ade80';
+    return '<span style="color:'+c+';font-weight:700">'+v+'%</span>';
+  };
+
+  const active=ORDER.filter(v=>agg[v]&&agg[v].cl>0);
+  const rows=active.map(v=>{
+    const a=agg[v],c=COLORS[v];
+    const avg=(w,n)=>n>0?+(w/n).toFixed(1):null;
+    const d0=avg(a.d0w,a.cl),d7=avg(a.d7w,a.cl),d30=avg(a.d30w,a.cl);
+    const u0=avg(a.u0w,a.cl),u30=avg(a.u30w,a.cl);
+    const o6=a.o6n>0?+(a.o6w/a.o6n).toFixed(2):null;
+    const o15=a.o15n>0?+(a.o15w/a.o15n).toFixed(2):null;
+    const o30=a.o30n>0?+(a.o30w/a.o30n).toFixed(2):null;
+    const sel=_canalDrill.canal===v?'background:rgba(255,255,255,.06);outline:1px solid '+c+';':'';
+    return '<tr style="cursor:pointer;'+sel+'" onclick="openCanalDrillModal(\''+v.replace(/'/g,"\\'")+'\')">'
+      +'<td style="font-weight:700;color:'+c+'">'+v+' <span style="font-size:9px;color:#6b7280">▼ detalhar</span></td>'
+      +'<td>'+fmtN(a.cl)+'</td>'
+      +'<td>'+(d0!=null?d0+'%':'—')+'</td><td>'+(d7!=null?d7+'%':'—')+'</td><td>'+(d30!=null?d30+'%':'—')+'</td>'
+      +'<td>'+(u0!=null?u0+'%':'—')+'</td><td>'+(u30!=null?u30+'%':'—')+'</td>'
+      +'<td>'+oCell(o6)+'</td><td>'+oCell(o15)+'</td><td>'+oCell(o30)+'</td>'
+      +'</tr>';
+  });
+  document.getElementById('canalTableBody').innerHTML=rows.join('');
+
+  if(chartCanalOver){chartCanalOver.destroy();chartCanalOver=null;}
+  if(chartCanalUso){chartCanalUso.destroy();chartCanalUso=null;}
+  const ctxO=document.getElementById('chartCanalOver').getContext('2d');
+  chartCanalOver=new Chart(ctxO,{type:'bar',data:{labels:active,datasets:[
+    {label:'Over6@MOB1', data:active.map(v=>{const a=agg[v];return a.o6n>0?+(a.o6w/a.o6n).toFixed(2):null;}),backgroundColor:active.map(v=>BG[v].replace('.75','.45')),borderColor:active.map(v=>BG[v]),borderWidth:1.5},
+    {label:'Over15@MOB2',data:active.map(v=>{const a=agg[v];return a.o15n>0?+(a.o15w/a.o15n).toFixed(2):null;}),backgroundColor:active.map(v=>BG[v].replace('.75','.6')), borderColor:active.map(v=>BG[v]),borderWidth:1.5},
+    {label:'Over30@MOB3',data:active.map(v=>{const a=agg[v];return a.o30n>0?+(a.o30w/a.o30n).toFixed(2):null;}),backgroundColor:active.map(v=>BG[v]),                   borderColor:active.map(v=>BG[v]),borderWidth:2}
+  ]},options:{responsive:true,plugins:{legend:{labels:{color:'#9ca3af',font:{size:10}}},title:{display:true,text:'Over Rates por Canal (% inadimplência)',color:'#e0e0e0',font:{size:11}}},scales:{x:{ticks:{color:'#9ca3af'}},y:{ticks:{color:'#9ca3af',callback:v=>v+'%'},grid:{color:'#1f2937'}}}}});
+  const ctxU=document.getElementById('chartCanalUso').getContext('2d');
+  chartCanalUso=new Chart(ctxU,{type:'bar',data:{labels:active,datasets:[
+    {label:'% Lim D0', data:active.map(v=>{const a=agg[v];return a.cl>0?+(a.d0w/a.cl).toFixed(1):null;}),backgroundColor:active.map(v=>BG[v].replace('.75','.45')),borderColor:active.map(v=>BG[v]),borderWidth:1.5},
+    {label:'% Lim D30',data:active.map(v=>{const a=agg[v];return a.cl>0?+(a.d30w/a.cl).toFixed(1):null;}),backgroundColor:active.map(v=>BG[v]),                   borderColor:active.map(v=>BG[v]),borderWidth:2},
+    {label:'Usr≥80% D30',data:active.map(v=>{const a=agg[v];return a.cl>0?+(a.u30w/a.cl).toFixed(1):null;}),backgroundColor:active.map(v=>BG[v].replace('.75','.3')),borderColor:active.map(v=>BG[v]),borderWidth:1.5}
+  ]},options:{responsive:true,plugins:{legend:{labels:{color:'#9ca3af',font:{size:10}}},title:{display:true,text:'Uso de Limite por Canal',color:'#e0e0e0',font:{size:11}}},scales:{x:{ticks:{color:'#9ca3af'}},y:{ticks:{color:'#9ca3af',callback:v=>v+'%'},grid:{color:'#1f2937'}}}}});
+
+  if(_canalDrill.canal) renderCanalDrill();
+}
+
+function openCanalDrill(canal){
+  const sf=document.getElementById('canalSafra').value;
+  const seg=document.getElementById('canalSeg').value;
+  _canalDrill.canal=canal;
+  _canalDrill.sf=sf;
+  _canalDrill.seg=seg;
+  document.getElementById('canalDrillSection').style.display='block';
+  document.getElementById('canalDrillTitle').textContent='Canal: '+canal;
+  renderCanalDrill();
+  renderCanalTab();
+}
+
+function closeCanalDrill(){
+  _canalDrill.canal=null;
+  document.getElementById('canalDrillSection').style.display='none';
+  renderCanalTab();
+}
+
+function setCanalDim(dim,btn){
+  _canalDrill.dim=dim;
+  document.querySelectorAll('#canalDimTabs .dm-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCanalDrill();
+}
+
+function renderCanalDrill(){
+  const {canal,sf,seg,dim}=_canalDrill;
+  if(!canal) return;
+
+  // Aggregate CANAL_DIM_DATA across matching keys
+  const agg={};
+  Object.entries(CANAL_DIM_DATA).forEach(([key,dims])=>{
+    const parts=key.split('||');
+    const kcanal=parts[0],ksf=parts[1],kseg=parts[2];
+    if(kcanal!==canal) return;
+    if(sf!=='all'&&ksf!==sf) return;
+    if(seg!=='all'&&kseg!==seg) return;
+    const arr=dims[dim];
+    if(!arr) return;
+    arr.forEach(r=>{
+      if(!agg[r.val]) agg[r.val]={cl:0,d0w:0,d30w:0,u30w:0,o6w:0,o6n:0,o15w:0,o15n:0,o30w:0,o30n:0};
+      const a=agg[r.val],n=r.cl||0;
+      a.cl+=n; a.d0w+=(r.d0||0)*n; a.d30w+=(r.d30||0)*n; a.u30w+=(r.u30||0)*n;
+      if(r.over6!=null){a.o6w+=r.over6*n;a.o6n+=n;}
+      if(r.over15!=null){a.o15w+=r.over15*n;a.o15n+=n;}
+      if(r.over30!=null){a.o30w+=r.over30*n;a.o30n+=n;}
+    });
+  });
+
+  const vals=_dimSort(Object.keys(agg), _dm.dim);
+  const total=vals.reduce((s,v)=>s+agg[v].cl,0);
+  const oC=v=>v==null?'—':'<span style="color:'+(v>4?'#ef4444':v>2.5?'#f59e0b':'#4ade80')+';font-weight:700">'+v+'%</span>';
+  const CANAL_COLOR={'ML':'rgba(21,128,61,.75)','MP':'rgba(29,78,216,.75)','EA - MP':'rgba(180,83,9,.75)','N/D':'rgba(107,114,128,.75)'};
+  const bc=CANAL_COLOR[canal]||'rgba(99,102,241,.75)';
+
+  // Table
+  const rows=vals.map(v=>{
+    const a=agg[v];
+    const d0=a.cl>0?+(a.d0w/a.cl).toFixed(1):null;
+    const d30=a.cl>0?+(a.d30w/a.cl).toFixed(1):null;
+    const u30=a.cl>0?+(a.u30w/a.cl).toFixed(1):null;
+    const o6=a.o6n>0?+(a.o6w/a.o6n).toFixed(2):null;
+    const o15=a.o15n>0?+(a.o15w/a.o15n).toFixed(2):null;
+    const o30=a.o30n>0?+(a.o30w/a.o30n).toFixed(2):null;
+    const sh=total>0?(a.cl/total*100).toFixed(1):'—';
+    return '<tr>'
+      +'<td style="font-weight:600">'+v+'</td>'
+      +'<td>'+fmtN(a.cl)+'</td>'
+      +'<td style="color:#6b7280">'+sh+'%</td>'
+      +'<td>'+(d0!=null?d0+'%':'—')+'</td>'
+      +'<td>'+(d30!=null?d30+'%':'—')+'</td>'
+      +'<td>'+(u30!=null?u30+'%':'—')+'</td>'
+      +'<td>'+oC(o6)+'</td><td>'+oC(o15)+'</td><td>'+oC(o30)+'</td>'
+      +'</tr>';
+  });
+  document.getElementById('canalDrillBody').innerHTML=rows.join('');
+
+  // Chart
+  if(chartCanalDrill){chartCanalDrill.destroy();chartCanalDrill=null;}
+  const ctx=document.getElementById('chartCanalDrill').getContext('2d');
+  chartCanalDrill=new Chart(ctx,{type:'bar',data:{labels:vals,datasets:[
+    {label:'Over6@MOB1', data:vals.map(v=>{const a=agg[v];return a.o6n>0?+(a.o6w/a.o6n).toFixed(2):null;}),backgroundColor:bc.replace('.75','.4'),borderColor:bc,borderWidth:1.5},
+    {label:'Over15@MOB2',data:vals.map(v=>{const a=agg[v];return a.o15n>0?+(a.o15w/a.o15n).toFixed(2):null;}),backgroundColor:bc.replace('.75','.6'),borderColor:bc,borderWidth:1.5},
+    {label:'Over30@MOB3',data:vals.map(v=>{const a=agg[v];return a.o30n>0?+(a.o30w/a.o30n).toFixed(2):null;}),backgroundColor:bc,borderColor:bc,borderWidth:2},
+    {label:'% Lim D30',  data:vals.map(v=>{const a=agg[v];return a.cl>0?+(a.d30w/a.cl).toFixed(1):null;}),backgroundColor:'rgba(0,0,0,0)',borderColor:'rgba(251,191,36,.7)',borderWidth:2,type:'line',yAxisID:'y2',tension:.3}
+  ]},options:{responsive:true,plugins:{legend:{labels:{color:'#9ca3af',font:{size:10}}},title:{display:true,text:(DIM_LABELS[dim]||dim)+' — Canal '+canal,color:'#e0e0e0',font:{size:11}}},scales:{x:{ticks:{color:'#9ca3af',maxRotation:45}},y:{ticks:{color:'#9ca3af',callback:v=>v+'%'},grid:{color:'#1f2937'},title:{display:true,text:'Over %',color:'#6b7280',font:{size:9}}},y2:{position:'right',ticks:{color:'#fbbf24',callback:v=>v+'%'},grid:{drawOnChartArea:false},title:{display:true,text:'% Lim D30',color:'#fbbf24',font:{size:9}}}}}});
+}
+function showTab(tab,btn){
+  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  if(tab==='curva-pol') renderCurvaPol();
+  if(tab==='safra-comp') renderSafraComp();
+  if(tab==='canal') renderCanalTab();
+}
+document.getElementById('searchPol').addEventListener('input',renderTabela);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrilldown();});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+// Populate safra filter dropdown
+const sfFilter=document.getElementById('safraFilter');
+sfFilter.innerHTML='<option value="all">Todas as safras</option>'+ALL_SAFRAS.map(sf=>`<option value="${sf}">${SF_LABELS[sf]}</option>`).join('');
+
+// Populate polSafra dropdown
+const canalSafraEl=document.getElementById('canalSafra');
+canalSafraEl.innerHTML='<option value="all">Todas as safras</option>'+ALL_SAFRAS.map(sf=>`<option value="${sf}">${SF_LABELS[sf]}</option>`).join('');
+canalSafraEl.value='all';
+
+const polSafraEl=document.getElementById('polSafra');
+polSafraEl.innerHTML=ALL_SAFRAS.map(sf=>`<option value="${sf}">${SF_LABELS[sf]}</option>`).join('')+'<option value="all">Todas (média)</option>';
+polSafraEl.value='2026-03';
+
+renderKPIs();
+renderCurvasGlobais();
+renderTabela();
+populatePolSelect();
+
+// ─── PERFIS DE RISCO ──────────────────────────────────────────────────────────
+const PERF_D30_SPLIT  = 80;   // utilization threshold (%)
+const PERF_RISK_SPLIT = 3.5;  // over30 risk threshold (%)
+let chartPerfBubble = null;
+let _perfSelected = null;
+let _perfProfiles = null;
+
+function buildProfilesAgg(seg) {
+  const agg = {};
+  for (const [key, dims] of Object.entries(CLUSTER_DATA)) {
+    const kSeg = key.split('||')[0];
+    if (seg !== 'all' && kSeg !== seg) continue;
+    for (const [dim, rows] of Object.entries(dims)) {
+      if (!agg[dim]) agg[dim] = {};
+      for (const r of rows) {
+        if (!agg[dim][r.val]) agg[dim][r.val] = {
+          cl:0, d0:0,d0n:0, d30:0,d30n:0, u0:0,u0n:0, u30:0,u30n:0,
+          o6:0,o6n:0, o15:0,o15n:0, o30:0,o30n:0
+        };
+        const a = agg[dim][r.val], c = r.cl || 0;
+        a.cl += c;
+        if (r.d0   != null){ a.d0  += r.d0  *c; a.d0n  += c; }
+        if (r.d30  != null){ a.d30 += r.d30 *c; a.d30n += c; }
+        if (r.u0   != null){ a.u0  += r.u0  *c; a.u0n  += c; }
+        if (r.u30  != null){ a.u30 += r.u30 *c; a.u30n += c; }
+        if (r.over6  != null){ a.o6  += r.over6  *c; a.o6n  += c; }
+        if (r.over15 != null){ a.o15 += r.over15 *c; a.o15n += c; }
+        if (r.over30 != null){ a.o30 += r.over30 *c; a.o30n += c; }
+      }
+    }
+  }
+  const out = {};
+  for (const [dim, vals] of Object.entries(agg)) {
+    out[dim] = {};
+    for (const [val, a] of Object.entries(vals)) {
+      out[dim][val] = {
+        dim, val, cl: a.cl,
+        d0:    a.d0n  >0 ? a.d0  /a.d0n  : null,
+        d30:   a.d30n >0 ? a.d30 /a.d30n : null,
+        u0:    a.u0n  >0 ? a.u0  /a.u0n  : null,
+        u30:   a.u30n >0 ? a.u30 /a.u30n : null,
+        over6:  a.o6n >0 ? a.o6  /a.o6n  : null,
+        over15: a.o15n>0 ? a.o15 /a.o15n : null,
+        over30: a.o30n>0 ? a.o30 /a.o30n : null,
+      };
+    }
+  }
+  return out;
+}
+
+function perfQ(d30, over30) {
+  if (d30==null||over30==null) return {id:0,label:'Sem dado',cls:'badge-qn',color:'#6b7280'};
+  const hi=(d30>=PERF_D30_SPLIT), ri=(over30>=PERF_RISK_SPLIT);
+  if (hi&&ri)   return {id:4,label:'Stress de Crédito',  cls:'badge-q4',color:'#ef4444'};
+  if (!hi&&ri)  return {id:3,label:'Risco Independente', cls:'badge-q3',color:'#f97316'};
+  if (hi&&!ri)  return {id:2,label:'Alto Uso · Sem Risco',cls:'badge-q2',color:'#3b82f6'};
+                return {id:1,label:'Conservador',          cls:'badge-q1',color:'#10b981'};
+}
+
+function perfKNN(target, profiles, k) {
+  const all = [];
+  for (const [dim, vals] of Object.entries(profiles))
+    for (const [val, p] of Object.entries(vals))
+      if (p.d30!=null && p.over30!=null) all.push({...p});
+  const feats = ['d30','over30','u30'];
+  const mx = {};
+  feats.forEach(f => { mx[f] = Math.max(...all.map(v=>v[f]||0), 1); });
+  const dist = (a,b) => Math.sqrt(feats.reduce((s,f)=>{
+    const x=(a[f]||0)/mx[f], y=(b[f]||0)/mx[f]; return s+(x-y)**2;
+  },0));
+  const maxD = Math.sqrt(feats.length);
+  return all
+    .filter(v => !(v.dim===target.dim && v.val===target.val))
+    .map(v => ({...v, dist:dist(target,v), sim:Math.max(0,1-dist(target,v)/maxD)}))
+    .sort((a,b)=>a.dist-b.dist).slice(0,k);
+}
+
+function renderPerfiles() {
+  const dim = document.getElementById('perf-dim').value;
+  const seg = document.getElementById('perf-seg').value;
+  _perfProfiles = buildProfilesAgg(seg);
+  _perfSelected = null;
+  _renderPerfBubble(dim);
+  document.getElementById('perf-detail').innerHTML =
+    '<div class="perf-nodata">Clique em uma bolha no mapa para ver o perfil detalhado e os vizinhos mais próximos em outras dimensões</div>';
+  _renderPerfCards(dim);
+}
+
+function _renderPerfBubble(dim) {
+  if (chartPerfBubble){chartPerfBubble.destroy();chartPerfBubble=null;}
+  const items = Object.entries(_perfProfiles[dim]||{})
+    .filter(([,p])=>p.d30!=null&&p.over30!=null);
+  if (!items.length) return;
+  const maxCl = Math.max(...items.map(([,p])=>p.cl));
+  const datasets = items.map(([val,p])=>{
+    const q=perfQ(p.d30,p.over30), sel=(_perfSelected===val);
+    return {
+      label:val,
+      data:[{x:p.d30, y:p.over30, r:Math.max(6,Math.min(30,Math.sqrt(p.cl/maxCl)*28+6)), _p:p}],
+      backgroundColor: q.color+(sel?'dd':'88'),
+      borderColor: sel?'#ffffff':q.color,
+      borderWidth: sel?2.5:1,
+    };
+  });
+
+  const qPlugin = {id:'qbg',beforeDatasetsDraw(ch){
+    const {ctx,scales,chartArea:ca}=ch;
+    if(!scales.x||!scales.y) return;
+    const xM=scales.x.getPixelForValue(PERF_D30_SPLIT);
+    const yM=scales.y.getPixelForValue(PERF_RISK_SPLIT);
+    const fill=(x1,y1,x2,y2,c)=>{ctx.save();ctx.globalAlpha=.07;ctx.fillStyle=c;ctx.fillRect(x1,y1,x2-x1,y2-y1);ctx.restore();};
+    fill(xM,ca.top,ca.right,yM,'#ef4444');
+    fill(ca.left,ca.top,xM,yM,'#f97316');
+    fill(xM,yM,ca.right,ca.bottom,'#3b82f6');
+    fill(ca.left,yM,xM,ca.bottom,'#10b981');
+    ctx.save();ctx.globalAlpha=.2;ctx.strokeStyle='#4b5563';ctx.setLineDash([4,4]);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(xM,ca.top);ctx.lineTo(xM,ca.bottom);
+    ctx.moveTo(ca.left,yM);ctx.lineTo(ca.right,yM);ctx.stroke();ctx.restore();
+    const lbl=(txt,x,y,c)=>{ctx.save();ctx.font='bold 9px Segoe UI';ctx.fillStyle=c;ctx.globalAlpha=.4;ctx.fillText(txt,x,y);ctx.restore();};
+    lbl('STRESS DE CRÉDITO',xM+5,ca.top+13,'#f87171');
+    lbl('RISCO INDEPENDENTE',ca.left+5,ca.top+13,'#fb923c');
+    lbl('ALTO USO · SEM RISCO',xM+5,ca.bottom-6,'#93c5fd');
+    lbl('CONSERVADOR',ca.left+5,ca.bottom-6,'#4ade80');
+  }};
+
+  chartPerfBubble = new Chart(document.getElementById('perf-bubble').getContext('2d'),{
+    type:'bubble', plugins:[qPlugin], data:{datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      onClick(evt,els){
+        if(!els.length) return;
+        const v=chartPerfBubble.data.datasets[els[0].datasetIndex].label;
+        _perfSelected=(_perfSelected===v)?null:v;
+        const d=document.getElementById('perf-dim').value;
+        _renderPerfBubble(d);
+        _renderPerfDetail(_perfSelected);
+        _renderPerfCards(d);
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{
+          const p=ctx.raw._p, q=perfQ(p.d30,p.over30);
+          return [`${ctx.dataset.label}  [${q.label}]`,
+                  `D30: ${p.d30?.toFixed(0)}%  Over30: ${p.over30?.toFixed(1)}%`,
+                  `${fmtN(p.cl)} clientes`];
+        }}}
+      },
+      scales:{
+        x:{title:{display:true,text:'% Limite usado D30 (média ponderada · todas as políticas)',color:'#6b7280',font:{size:10}},ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#1f2937'}},
+        y:{title:{display:true,text:'Over30@MOB3 (%)',color:'#6b7280',font:{size:10}},ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#1f2937'}}
+      }
+    }
+  });
+}
+
+function _renderPerfDetail(val) {
+  const el = document.getElementById('perf-detail');
+  if (!val||!_perfProfiles) {
+    el.innerHTML='<div class="perf-nodata">Clique em uma bolha no mapa para ver o perfil detalhado e os vizinhos mais próximos em outras dimensões</div>';
+    return;
+  }
+  const dim=document.getElementById('perf-dim').value;
+  const p=_perfProfiles[dim]?.[val]; if(!p) return;
+  const q=perfQ(p.d30,p.over30);
+  const neighbors=perfKNN(p,_perfProfiles,6);
+
+  const mrow=(label,v,suffix='%',hi=5,md=3.5)=>{
+    if(v==null) return `<div class="perf-metric-row"><span style="color:#6b7280">${label}</span><span style="color:#4b5563">—</span></div>`;
+    const c=v>=hi?'#f87171':v>=md?'#fb923c':'#4ade80';
+    const useColor=(suffix==='%'&&hi<=10); // only color mob metrics
+    return `<div class="perf-metric-row"><span style="color:#9ca3af">${label}</span><span style="${useColor?'color:'+c+';font-weight:700':'color:#e0e0e0'}">${v.toFixed(1)}${suffix}</span></div>`;
+  };
+  const simBar=sim=>{
+    const pct=Math.round(sim*100);
+    return `<div style="width:60px;height:3px;background:#1f2937;border-radius:2px;overflow:hidden;flex-shrink:0"><div style="width:${pct}%;height:3px;background:#3b82f6;border-radius:2px"></div></div>`;
+  };
+
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#fff">${dim}: <span style="color:${q.color}">${val}</span></div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">${fmtN(Math.round(p.cl))} clientes · agregado cross-política</div>
+      </div>
+      <span class="perf-badge ${q.cls}">${q.label}</span>
+    </div>
+    <div style="margin-bottom:14px">
+      ${mrow('% Limite D0', p.d0, '%', 999, 999)}
+      ${mrow('% Limite D30', p.d30, '%', 999, 999)}
+      ${mrow('Usr ≥80% D0', p.u0, '%', 999, 999)}
+      ${mrow('Usr ≥80% D30', p.u30, '%', 999, 999)}
+      ${mrow('Over6@MOB1', p.over6)}
+      ${mrow('Over15@MOB2', p.over15)}
+      ${mrow('Over30@MOB3', p.over30)}
+    </div>
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:8px">
+      Perfis mais similares — outras dimensões
+    </div>
+    <div style="font-size:10px;color:#4b5563;margin-bottom:8px">Proximidade calculada por distância euclidiana em D30 · Over30 · Usr≥80% D30</div>
+    ${neighbors.map(n=>{
+      const nq=perfQ(n.d30,n.over30);
+      return `<div class="perf-neighbor">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:#e0e0e0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.dim}: ${n.val}</div>
+          <div style="font-size:10px;color:#6b7280">D30 ${n.d30?.toFixed(0)}% · Over30 ${n.over30?.toFixed(1)}% · ${fmtN(Math.round(n.cl))} cli</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="perf-badge ${nq.cls}" style="font-size:9px">${nq.label}</span>
+          <div style="display:flex;align-items:center;gap:5px">
+            ${simBar(n.sim)}
+            <span style="font-size:9px;color:#6b7280;width:28px;text-align:right">${Math.round(n.sim*100)}%</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+function _renderPerfCards(dim) {
+  const el=document.getElementById('perf-cards');
+  const items=Object.entries(_perfProfiles[dim]||{})
+    .sort((a,b)=>(b[1].over30||0)-(a[1].over30||0));
+  if(!items.length){el.innerHTML='';return;}
+  const maxD30=Math.max(...items.map(([,p])=>p.d30||0));
+
+  el.innerHTML=items.map(([val,p])=>{
+    const q=perfQ(p.d30,p.over30), sel=(_perfSelected===val);
+    const bar=(v,max,col)=>{
+      if(v==null) return `<div style="height:3px;background:#1f2937;border-radius:2px"></div>`;
+      return `<div style="height:3px;background:#1f2937;border-radius:2px;overflow:hidden"><div style="width:${Math.min(100,v/max*100).toFixed(1)}%;height:3px;background:${col};border-radius:2px"></div></div>`;
+    };
+    const mob=(label,v)=>{
+      if(v==null) return `<div style="font-size:10px;color:#4b5563">${label} —</div>`;
+      const c=v>=5?'#f87171':v>=3.5?'#fb923c':'#4ade80';
+      return `<div style="font-size:10px"><span style="color:#6b7280">${label}</span> <strong style="color:${c}">${v.toFixed(1)}%</strong></div>`;
+    };
+    return `<div class="perf-card" onclick="selectPerfVal('${val.replace(/'/g,"\\'")}')"
+      style="border-color:${sel?q.color:'#1f2937'};box-shadow:${sel?'0 0 0 1px '+q.color:'none'}">
+      <div class="perf-card-hd">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#e0e0e0">${val}</div>
+          <div style="font-size:10px;color:#6b7280">${fmtN(Math.round(p.cl))} clientes</div>
+        </div>
+        <span class="perf-badge ${q.cls}">${q.label}</span>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#6b7280;margin-bottom:3px">
+          <span>D30: <strong style="color:#e0e0e0">${p.d30?.toFixed(0)??'—'}%</strong></span>
+          <span>Usr≥80%D30: <strong style="color:#e0e0e0">${p.u30?.toFixed(0)??'—'}%</strong></span>
+        </div>
+        ${bar(p.d30,maxD30,q.color)}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${mob('O6:',p.over6)}${mob('O15:',p.over15)}${mob('O30:',p.over30)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectPerfVal(val) {
+  _perfSelected=(_perfSelected===val)?null:val;
+  const dim=document.getElementById('perf-dim').value;
+  _renderPerfBubble(dim);
+  _renderPerfDetail(_perfSelected?val:null);
+  _renderPerfCards(dim);
+}
+
+// Init
+renderPerfiles();
+
+</script>
+</body>
+</html>
