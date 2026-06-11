@@ -161,11 +161,13 @@ def main():
         f"const CANAL_CROSS_DATA = {json.dumps(canal_cross, ensure_ascii=False)};\n"
     )
 
-    # Replace the fetch() bootstrap with embedded data (static HTML, no server needed)
+    # Replace only the fetch() bootstrap; preserve the functions block that follows it
     fetch_start = html.find("// ── DATA loaded dynamically")
-    drill_state = html.find("\n// ─── DRILL-DOWN STATE", fetch_start)
+    fn_start    = html.find("\nconst SF_LABELS", fetch_start)   # functions start here
+    drill_state = html.find("\n// ─── DRILL-DOWN STATE")        # functions end here
     if fetch_start > 0 and drill_state > fetch_start:
-        html = html[:fetch_start] + data_block + html[drill_state:]
+        functions_block = html[fn_start:drill_state] if fn_start > 0 else ""
+        html = html[:fetch_start] + data_block + functions_block + html[drill_state:]
 
     os.makedirs("docs", exist_ok=True)
     out_path = os.path.join("docs", "index.html")
