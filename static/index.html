@@ -402,7 +402,12 @@ let ALL_SAFRAS = [];
 
 
 
-const SF_LABELS = {'all':'Todas as safras','2025-04':'Abr/25','2025-05':'Mai/25','2025-06':'Jun/25','2025-07':'Jul/25','2025-08':'Ago/25','2025-09':'Set/25','2025-10':'Out/25','2025-11':'Nov/25','2025-12':'Dez/25','2026-01':'Jan/26','2026-02':'Fev/26','2026-03':'Mar/26','2026-04':'Abr/26*','2026-05':'Mai/26*'};
+const SF_LABELS = {'all':'Todas as safras','2025-04':'Abr/25','2025-05':'Mai/25','2025-06':'Jun/25','2025-07':'Jul/25','2025-08':'Ago/25','2025-09':'Set/25','2025-10':'Out/25','2025-11':'Nov/25','2025-12':'Dez/25','2026-01':'Jan/26','2026-02':'Fev/26','2026-03':'Mar/26','2026-04':'Abr/26*','2026-05':'Mai/26*','2026-06':'Jun/26*'};
+// Gera label automaticamente para qualquer safra YYYY-MM não mapeada
+const _MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function sfLabel(sf){ if(SF_LABELS[sf]) return SF_LABELS[sf];
+  const p=sf.match(/^(\d{4})-(\d{2})$/); return p?_MESES[+p[2]-1]+'/'+p[1].slice(2)+'*':sf; }
+
 const COMP_SAFRAS = ['2025-10','2025-11','2025-12','2026-01','2026-02','2026-03'];
 const COMP_COLORS = ['rgba(99,102,241,.85)','rgba(59,130,246,.85)','rgba(16,185,129,.85)','rgba(245,158,11,.85)','rgba(239,68,68,.85)','rgba(168,85,247,.85)'];
 const COLORS = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#a855f7','#ec4899','#14b8a6'];
@@ -544,8 +549,8 @@ function renderTabela(){
     const sc=d.s==='micro_tc'?'#ef4444':'#3b82f6';
     const rowStyle=d.parcial?'background:rgba(251,191,36,.04);':'';
     const sfCell=d.parcial
-      ?`<td style="color:#fbbf24;font-style:italic">${SF_LABELS[d.sf]||d.sf} <span style="font-size:10px;background:#451a03;color:#fbbf24;padding:1px 5px;border-radius:10px;font-style:normal">parcial</span></td>`
-      :`<td>${SF_LABELS[d.sf]||d.sf}</td>`;
+      ?`<td style="color:#fbbf24;font-style:italic">${sfLabel(d.sf)||d.sf} <span style="font-size:10px;background:#451a03;color:#fbbf24;padding:1px 5px;border-radius:10px;font-style:normal">parcial</span></td>`
+      :`<td>${sfLabel(d.sf)||d.sf}</td>`;
     return `<tr style="${rowStyle}">
       <td><span style="color:${sc};font-weight:700;font-size:11px">${d.s}</span></td>
       <td style="max-width:240px;white-space:normal;font-size:11px"><span class="pol-link" onclick="openDrilldown('${d.s}','${d.p.replace(/'/g,"\\'")}','${d.sf}')">${d.p}</span></td>
@@ -657,7 +662,7 @@ function openDrilldown(seg, pol, sf){
   const sel = document.getElementById('dm-safra');
   sel.innerHTML = polSafras.map(s=>`<option value="${s}"${s===selectedSf?'selected':''}>${SF_LABELS[s]}</option>`).join('');
   document.getElementById('dm-title').textContent = pol;
-  document.getElementById('dm-sub').textContent = `${seg} · ${SF_LABELS[selectedSf]}`;
+  document.getElementById('dm-sub').textContent = `${seg} · ${sfLabel(selectedSf)}`;
   document.querySelectorAll('.dm-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
   _dm.dim='RANGE_BUREAU';
   _updateDim2Opts('RANGE_BUREAU');
@@ -807,7 +812,7 @@ function setDimTab(dim, btn){
 function renderDrilldown(){
   _dm.sf = document.getElementById('dm-safra').value;
 
-  document.getElementById('dm-sub').textContent = `${_dm.seg} · ${SF_LABELS[_dm.sf]}`;
+  document.getElementById('dm-sub').textContent = `${_dm.seg} · ${sfLabel(_dm.sf)}`;
   const dim2El = document.getElementById('dm-dim2');
   const dim2 = dim2El ? dim2El.value : '';
   const key = `${_dm.seg}||${_dm.pol}||${_dm.sf}`;
@@ -980,7 +985,7 @@ function _renderDrillNoData(key){
     <div class="dm-nodata">
       <strong style="font-size:15px;color:#e5e7eb">Dados não disponíveis</strong>
       <span style="font-size:13px;color:#9ca3af;margin-top:6px">${_dm.pol}</span>
-      <span style="font-size:12px;color:#6b7280">${_dm.seg} · ${SF_LABELS[_dm.sf]}</span>
+      <span style="font-size:12px;color:#6b7280">${_dm.seg} · ${sfLabel(_dm.sf)}</span>
       <span style="font-size:11px;color:#4b5563;margin-top:10px">Esta política não possui registros na staging table para esta combinação de safra / segmento.</span>
     </div>`;
 }
